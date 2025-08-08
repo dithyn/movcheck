@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:movcheck/Screens/First.dart';
+import 'package:movcheck/Screens/Homescreen.dart';
+import 'package:movcheck/Screens/mainlayout.dart';
 
 void main() {
   runApp(const MyApp());
@@ -11,10 +12,6 @@ class MyApp extends StatelessWidget {
   // This widget is the root of your application.
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      home: First(),
-    );
+    return MaterialApp(home: Mainlayout(), debugShowCheckedModeBanner: false);
   }
 }
-
-
