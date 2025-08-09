@@ -6,6 +6,94 @@ import 'package:smooth_page_indicator/smooth_page_indicator.dart';
 
 enum ImageQuality { standard, original }
 
+// NEW: A reusable skeleton widget for placeholder UI.
+class Skeleton extends StatelessWidget {
+  final double? height;
+  final double? width;
+  final double borderRadius;
+
+  const Skeleton({super.key, this.height, this.width, this.borderRadius = 12});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      height: height,
+      width: width,
+      decoration: BoxDecoration(
+        color: Theme.of(context).colorScheme.surfaceVariant.withOpacity(0.5),
+        borderRadius: BorderRadius.circular(borderRadius),
+      ),
+    );
+  }
+}
+
+// NEW: A specific skeleton for the movie posters.
+class MoviePosterSkeleton extends StatelessWidget {
+  final bool isOriginalQuality;
+  const MoviePosterSkeleton({super.key, this.isOriginalQuality = false});
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 6.0),
+      child: Skeleton(width: isOriginalQuality ? null : 130),
+    );
+  }
+}
+
+// NEW: The complete skeleton layout for the HomeScreen.
+class HomeScreenSkeleton extends StatelessWidget {
+  const HomeScreenSkeleton({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return Stack(
+      children: [
+        ListView(
+          physics: const ClampingScrollPhysics(),
+          padding: const EdgeInsets.only(bottom: 100.0),
+          children: [
+            // Skeleton for the PageView
+            SizedBox(
+              height: MediaQuery.of(context).size.height / 2,
+              child: const MoviePosterSkeleton(isOriginalQuality: true),
+            ),
+            const SizedBox(height: 24),
+            _buildSkeletonCategoryRow(),
+            const SizedBox(height: 24),
+            _buildSkeletonCategoryRow(),
+          ],
+        ),
+      ],
+    );
+  }
+
+  Widget _buildSkeletonCategoryRow() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Padding(
+          padding: EdgeInsets.symmetric(horizontal: 16.0),
+          child: Skeleton(height: 20, width: 150),
+        ),
+        const SizedBox(height: 8),
+        SizedBox(
+          height: 200,
+          child: ListView.separated(
+            separatorBuilder: (context, index) {
+              return SizedBox(width: 7);
+            },
+            scrollDirection: Axis.horizontal,
+            itemCount: 5, // Show 5 placeholder items
+            padding: const EdgeInsets.symmetric(horizontal: 10),
+            itemBuilder: (context, index) => const MoviePosterSkeleton(),
+          ),
+        ),
+      ],
+    );
+  }
+}
+
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
 
@@ -19,10 +107,7 @@ class _HomeScreenState extends State<HomeScreen> {
   String? _errorMessage;
   List _trendingMovies = [], _topRatedMovies = [], _upcomingMovies = [];
   late PageController _pageController;
-
-  // NEW: Controller to detect scroll position.
   late ScrollController _scrollController;
-  // NEW: State variable to control app bar visibility.
   bool _isAppBarVisible = true;
 
   @override
@@ -30,7 +115,6 @@ class _HomeScreenState extends State<HomeScreen> {
     super.initState();
     _pageController = PageController();
     _scrollController = ScrollController();
-    // Add a listener to the scroll controller.
     _scrollController.addListener(_scrollListener);
     _fetchAllMovies();
   }
@@ -38,22 +122,17 @@ class _HomeScreenState extends State<HomeScreen> {
   @override
   void dispose() {
     _pageController.dispose();
-    // Remove the listener and dispose of the controller to prevent memory leaks.
     _scrollController.removeListener(_scrollListener);
     _scrollController.dispose();
     super.dispose();
   }
 
-  // NEW: Listener method to update app bar visibility.
   void _scrollListener() {
-    // If user scrolls down more than 50 pixels, hide the app bar.
     if (_scrollController.offset > 50 && _isAppBarVisible) {
       setState(() {
         _isAppBarVisible = false;
       });
-    }
-    // If user scrolls back to the top, show the app bar.
-    else if (_scrollController.offset <= 50 && !_isAppBarVisible) {
+    } else if (_scrollController.offset <= 50 && !_isAppBarVisible) {
       setState(() {
         _isAppBarVisible = true;
       });
@@ -61,6 +140,8 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Future<void> _fetchAllMovies() async {
+    // Simulate a longer load time to see the skeleton UI
+    // await Future.delayed(const Duration(seconds: 2));
     if (!mounted) return;
     setState(() {
       _isLoading = true;
@@ -95,8 +176,9 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Widget _buildBody() {
+    // UPDATED: Show the skeleton UI while loading.
     if (_isLoading) {
-      return const Center(child: CircularProgressIndicator());
+      return const HomeScreenSkeleton();
     }
     if (_errorMessage != null) {
       return Center(
@@ -114,11 +196,10 @@ class _HomeScreenState extends State<HomeScreen> {
       );
     }
 
-    // UPDATED: The body is now a Stack to allow the app bar to float on top.
     return Stack(
       children: [
+        Container(color: Theme.of(context).scaffoldBackgroundColor),
         ListView(
-          // Attach the scroll controller here.
           controller: _scrollController,
           padding: const EdgeInsets.only(bottom: 100.0),
           children: [
@@ -132,53 +213,33 @@ class _HomeScreenState extends State<HomeScreen> {
                     itemCount: _trendingMovies.length,
                     itemBuilder: (context, index) {
                       final movie = _trendingMovies[index];
-                      return Stack(
-                        children: [
-                          MoviePoster(
-                            movieId: movie['id'],
-                            posterPath: movie['poster_path'],
-                            title: movie['title'],
-                            quality: ImageQuality.original,
-                          ),
-                          Align(
-                            alignment: AlignmentGeometry.xy(-0.8, 0.8),
-                            child: Padding(
-                              padding: EdgeInsetsGeometry.only(left: 0),
-                              child: Text(
-                                movie['title'],
-                                maxLines: 2,
-                                style: TextStyle(
-                                  fontSize: 20,
-                                  height: 1,
-                                  fontWeight: FontWeight.bold,
-                                  fontFamily: 'Product',
-                                ),
-                              ),
-                            ),
-                          ),
-                        ],
+                      return MoviePoster(
+                        movieId: movie['id'],
+                        posterPath: movie['poster_path'],
+                        title: movie['title'],
+                        quality: ImageQuality.original,
                       );
                     },
                   ),
                 ),
-                Padding(
-                  padding: const EdgeInsets.only(bottom: 16.0),
-                  child: SmoothPageIndicator(
-                    controller: _pageController,
-                    count: _trendingMovies.length,
-                    effect: ExpandingDotsEffect(
-                      dotHeight: 6,
-                      dotWidth: 20,
-                      activeDotColor: Theme.of(
-                        context,
-                      ).textTheme.bodyLarge!.color!,
-                      dotColor: Theme.of(context).hintColor,
-                    ),
-                  ),
-                ),
               ],
             ),
-            const SizedBox(height: 24),
+            const SizedBox(height: 12),
+            Padding(
+              padding: const EdgeInsets.only(bottom: 16.0),
+              child: SmoothPageIndicator(
+                controller: _pageController,
+                count: _trendingMovies.length,
+                effect: ExpandingDotsEffect(
+                  dotHeight: 5,
+                  spacing: 4,
+                  dotWidth: 20,
+                  activeDotColor: Theme.of(context).textTheme.bodyLarge!.color!,
+                  dotColor: Theme.of(context).hintColor,
+                ),
+              ),
+            ),
+            const SizedBox(height: 5),
             _buildMovieCategoryRow(
               title: 'Top Rated Movies',
               movies: _topRatedMovies,
@@ -190,13 +251,11 @@ class _HomeScreenState extends State<HomeScreen> {
             ),
           ],
         ),
-        // NEW: The animated floating app bar.
         _buildFloatingAppBar(),
       ],
     );
   }
 
-  // NEW: Widget for the animated app bar.
   Widget _buildFloatingAppBar() {
     return AnimatedOpacity(
       opacity: _isAppBarVisible ? 1.0 : 0.0,
@@ -205,8 +264,8 @@ class _HomeScreenState extends State<HomeScreen> {
         child: BackdropFilter(
           filter: ImageFilter.blur(sigmaX: 7, sigmaY: 7),
           child: Container(
+            height: 110,
             width: MediaQuery.of(context).size.width,
-            height: 110, // Height includes status bar area
             padding: const EdgeInsets.only(top: 40, left: 16, right: 16),
             decoration: BoxDecoration(
               gradient: LinearGradient(
@@ -218,12 +277,16 @@ class _HomeScreenState extends State<HomeScreen> {
                 ],
               ),
             ),
-            child: Text(
-              'MovCheck',
-              style: TextStyle(
-                fontSize: 40,
-                fontWeight: FontWeight.bold,
-                fontFamily: 'ClashDisplay',
+            child: Padding(
+              padding: const EdgeInsets.only(top: 10, bottom: 10),
+              child: Text(
+                'MovCheck',
+                style: TextStyle(
+                  fontSize: 40,
+                  color: Colors.white,
+                  fontWeight: FontWeight.bold,
+                  fontFamily: 'ClashDisplay',
+                ),
               ),
             ),
           ),
@@ -233,7 +296,6 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Widget _buildMovieCategoryRow({required String title, required List movies}) {
-    // ... (This widget remains the same)
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -251,7 +313,10 @@ class _HomeScreenState extends State<HomeScreen> {
         const SizedBox(height: 8),
         SizedBox(
           height: 200,
-          child: ListView.builder(
+          child: ListView.separated(
+            separatorBuilder: (context, index) {
+              return SizedBox(width: 7);
+            },
             scrollDirection: Axis.horizontal,
             itemCount: movies.length,
             padding: const EdgeInsets.symmetric(horizontal: 10),
@@ -271,7 +336,6 @@ class _HomeScreenState extends State<HomeScreen> {
 }
 
 class MoviePoster extends StatelessWidget {
-  // ... (This widget remains the same)
   final int movieId;
   final String? posterPath;
   final String? title;
@@ -299,10 +363,11 @@ class MoviePoster extends StatelessWidget {
           ? Image.network(
               imageUrl,
               fit: BoxFit.cover,
+              // UPDATED: Use a skeleton for the image loading placeholder.
               loadingBuilder: (context, child, loadingProgress) =>
                   loadingProgress == null
                   ? child
-                  : const Center(child: CircularProgressIndicator()),
+                  : const Skeleton(borderRadius: 0),
               errorBuilder: (context, error, stackTrace) => Container(
                 color: Theme.of(context).colorScheme.surfaceVariant,
                 child: const Center(child: Icon(Icons.movie_creation_outlined)),
@@ -332,33 +397,38 @@ class MoviePoster extends StatelessWidget {
         child: quality == ImageQuality.original && title != null
             ? Stack(
                 fit: StackFit.expand,
-                alignment: Alignment.bottomLeft,
+                alignment: Alignment.topCenter,
                 children: [
                   imageWidget,
                   Container(
                     decoration: BoxDecoration(
                       gradient: LinearGradient(
                         colors: [
+                          Colors.black.withOpacity(0.7),
                           Colors.transparent,
-                          Theme.of(context).scaffoldBackgroundColor,
                         ],
                         begin: Alignment.topCenter,
                         end: Alignment.bottomCenter,
-                        stops: const [0.5, 1.0],
+                        stops: const [0.0, 0.4],
                       ),
                     ),
                   ),
                   Padding(
-                    padding: const EdgeInsets.all(12.0),
-                    child: Text(
-                      title!,
-                      style: TextStyle(
-                        fontSize: 20,
-                        fontWeight: FontWeight.bold,
-                        color: Theme.of(context).textTheme.bodyLarge?.color,
+                    padding: const EdgeInsets.only(left: 9.0),
+                    child: Align(
+                      alignment: AlignmentGeometry.xy(-1, 0.8),
+                      child: Text(
+                        title!,
+                        style: const TextStyle(
+                          fontSize: 40,
+                          height: 1,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.white,
+                          fontFamily: 'ClashDisplay',
+                        ),
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
                       ),
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
                     ),
                   ),
                 ],

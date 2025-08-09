@@ -56,99 +56,143 @@ class _SearchPageState extends State<SearchPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: Padding(
-        padding: const EdgeInsets.fromLTRB(16, 50, 16, 0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            TextField(
-              controller: _searchController,
-              onSubmitted: _searchMovies,
-              autofocus: true,
-              style: const TextStyle(fontSize: 18),
-              decoration: InputDecoration(
-                hintText: 'Search for a movie...',
-                prefixIcon: Icon(
-                  Icons.search,
-                  color: Theme.of(context).hintColor,
+      body: CustomScrollView(
+        slivers: [
+          _buildSliverAppBar(),
+          // The body is now built with sliver-aware widgets.
+          _buildResultsBody(),
+        ],
+      ),
+    );
+  }
+
+  /// Builds the collapsing app bar with the search field.
+  Widget _buildSliverAppBar() {
+    return SliverAppBar(
+      expandedHeight: 175.0, // Increased height to fit the column
+      pinned: true,
+      floating: true,
+
+      // This title appears when the app bar is collapsed.
+      flexibleSpace: FlexibleSpaceBar(
+        // The background contains the expanded layout.
+        background: SafeArea(
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16.0),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.end,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // 1. The large "Search!" Title
+                const Text(
+                  'Search!',
+                  style: TextStyle(
+                    fontFamily: 'ClashDisplay',
+                    fontWeight: FontWeight.bold,
+                    fontSize: 60,
+                  ),
                 ),
-                filled: true,
-                fillColor: Theme.of(context).colorScheme.surfaceVariant,
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(30.0),
-                  borderSide: BorderSide.none,
+                const SizedBox(height: 16),
+                // 2. The Search TextField
+                TextField(
+                  controller: _searchController,
+                  onSubmitted: _searchMovies,
+                  autofocus: true,
+                  style: const TextStyle(fontSize: 18),
+                  decoration: InputDecoration(
+                    hintText: 'Search for a movie...',
+                    prefixIcon: Icon(
+                      Icons.search,
+                      color: Theme.of(context).hintColor,
+                    ),
+                    filled: true,
+                    fillColor: Theme.of(context).colorScheme.surfaceVariant,
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(30.0),
+                      borderSide: BorderSide.none,
+                    ),
+                    contentPadding: const EdgeInsets.symmetric(vertical: 16.0),
+                  ),
                 ),
-                contentPadding: const EdgeInsets.symmetric(vertical: 16.0),
-              ),
+                const SizedBox(height: 16), // Bottom padding
+              ],
             ),
-            const SizedBox(height: 24),
-            Expanded(child: _buildResultsBody()),
-          ],
+          ),
         ),
       ),
     );
   }
 
+  /// Determines what to show in the main body based on the current state.
+  /// This widget now returns a Sliver, not a regular widget.
   Widget _buildResultsBody() {
     if (_isLoading) {
-      return const Center(child: CircularProgressIndicator());
+      return const SliverFillRemaining(
+        child: Center(child: CircularProgressIndicator()),
+      );
     }
     if (_errorMessage != null) {
-      return Center(child: Text(_errorMessage!));
+      return SliverFillRemaining(child: Center(child: Text(_errorMessage!)));
     }
     final hintStyle = TextStyle(
       fontSize: 18,
       color: Theme.of(context).hintColor,
     );
     if (!_hasSearched) {
-      return Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(
-              Icons.search_off,
-              size: 60,
-              color: Theme.of(context).hintColor,
-            ),
-            const SizedBox(height: 16),
-            Text('Find your next favorite movie!', style: hintStyle),
-          ],
+      return SliverFillRemaining(
+        child: Center(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(
+                Icons.search_off,
+                size: 60,
+                color: Theme.of(context).hintColor,
+              ),
+              const SizedBox(height: 16),
+              Text('Find your next favorite movie!', style: hintStyle),
+            ],
+          ),
         ),
       );
     }
     if (_searchResults.isEmpty) {
-      return Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(
-              Icons.movie_filter_outlined,
-              size: 60,
-              color: Theme.of(context).hintColor,
-            ),
-            const SizedBox(height: 16),
-            Text('No results found. Try another search.', style: hintStyle),
-          ],
+      return SliverFillRemaining(
+        child: Center(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(
+                Icons.movie_filter_outlined,
+                size: 60,
+                color: Theme.of(context).hintColor,
+              ),
+              const SizedBox(height: 16),
+              Text('No results found. Try another search.', style: hintStyle),
+            ],
+          ),
         ),
       );
     }
-    return GridView.builder(
-      padding: EdgeInsets.zero,
-      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-        crossAxisCount: 3,
-        childAspectRatio: 2 / 3,
-        crossAxisSpacing: 12,
-        mainAxisSpacing: 12,
+    // Use SliverPadding and SliverGrid for the results.
+    return SliverPadding(
+      padding: const EdgeInsets.all(16.0),
+      sliver: SliverGrid(
+        gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+          crossAxisCount: 3,
+          childAspectRatio: 2 / 3,
+          crossAxisSpacing: 12,
+          mainAxisSpacing: 12,
+        ),
+        delegate: SliverChildBuilderDelegate((context, index) {
+          final movie = _searchResults[index];
+          return MoviePoster(
+            movieId: movie['id'],
+            posterPath: movie['poster_path'],
+            quality: ImageQuality.standard,
+          );
+        }, childCount: _searchResults.length),
       ),
-      itemCount: _searchResults.length,
-      itemBuilder: (context, index) {
-        final movie = _searchResults[index];
-        return MoviePoster(
-          movieId: movie['id'],
-          posterPath: movie['poster_path'],
-          quality: ImageQuality.standard,
-        );
-      },
     );
   }
 }

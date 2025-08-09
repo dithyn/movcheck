@@ -4,41 +4,13 @@ import 'dart:ui'; // Import this for the blur effect
 import 'package:movcheck/Screens/Homescreen.dart';
 import 'package:movcheck/Screens/Searchpage.dart';
 import 'package:movcheck/Screens/Wishlist.dart';
-import 'package:movcheck/providers/theme_provider.dart';
-import 'package:provider/provider.dart';
+import 'package:movcheck/Screens/Accounts.dart';
+
 
 // --- Placeholder pages (no changes needed here) ---
 
 
-class AccountScreen extends StatelessWidget {
-  const AccountScreen({super.key});
-  @override
-  Widget build(BuildContext context) {
-    final themeProvider = Provider.of<ThemeProvider>(context);
-    return Scaffold(
-      appBar: AppBar(title: const Text('Account'), centerTitle: true),
-      body: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            const Text('Dark Mode', style: TextStyle(fontSize: 18)),
-            Switch.adaptive(
-              value: themeProvider.themeMode == ThemeMode.dark,
-              onChanged: (value) {
-                final provider = Provider.of<ThemeProvider>(
-                  context,
-                  listen: false,
-                );
-                provider.toggleTheme(value);
-              },
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
+
 // ----------------------------------------------------
 
 class Mainlayout extends StatefulWidget {
@@ -54,7 +26,7 @@ class _Layoutstate extends State<Mainlayout> {
     HomeScreen(),
     SearchPage(),
     WishlistPage(),
-    AccountScreen(),
+    AccountPage()
   ];
 
   void _onItemTapped(int index) {

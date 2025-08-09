@@ -8,6 +8,78 @@ import 'package:palette_generator/palette_generator.dart';
 import 'package:provider/provider.dart';
 import 'package:url_launcher/url_launcher.dart';
 
+// NEW: The complete skeleton layout for the MovieDetailsPage.
+class MovieDetailsPageSkeleton extends StatelessWidget {
+  const MovieDetailsPageSkeleton({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return CustomScrollView(
+      physics: const NeverScrollableScrollPhysics(), // Disable scrolling
+      slivers: [
+        SliverAppBar(
+          expandedHeight: 300.0,
+          pinned: true,
+          elevation: 0,
+          flexibleSpace: FlexibleSpaceBar(
+            background: Skeleton(
+              width: double.infinity,
+              height: double.infinity,
+              borderRadius: 0,
+            ),
+          ),
+        ),
+        SliverToBoxAdapter(
+          child: Padding(
+            padding: const EdgeInsets.all(16.0),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Skeleton(height: 22, width: 120),
+                const SizedBox(height: 16),
+                const Skeleton(height: 16, width: double.infinity),
+                const SizedBox(height: 8),
+                const Skeleton(height: 16, width: double.infinity),
+                const SizedBox(height: 8),
+                const Skeleton(height: 16, width: 200),
+                const SizedBox(height: 24),
+                const Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                  children: [
+                    Skeleton(height: 60, width: 170, borderRadius: 30),
+                    Skeleton(height: 60, width: 60, borderRadius: 30),
+                    Skeleton(height: 60, width: 60, borderRadius: 30),
+                  ],
+                ),
+                const SizedBox(height: 24),
+                const Skeleton(height: 22, width: 80),
+                const SizedBox(height: 12),
+                SizedBox(
+                  height: 150,
+                  child: ListView.builder(
+                    scrollDirection: Axis.horizontal,
+                    itemCount: 5,
+                    itemBuilder: (context, index) => const Padding(
+                      padding: EdgeInsets.only(right: 12.0),
+                      child: Column(
+                        children: [
+                          Expanded(child: Skeleton(width: 100)),
+                          SizedBox(height: 8),
+                          Skeleton(height: 12, width: 80),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+}
+
 class MovieDetailsPage extends StatefulWidget {
   final int movieId;
 
@@ -151,53 +223,39 @@ class _MovieDetailsPageState extends State<MovieDetailsPage> {
       context: context,
       backgroundColor: Colors.transparent,
       builder: (context) {
-        return ClipRRect(
-          borderRadius: BorderRadiusGeometry.circular(20),
-          child: Container(
-            padding: const EdgeInsets.all(16.0),
-            decoration: BoxDecoration(
-              color: Theme.of(context).scaffoldBackgroundColor,
-              borderRadius: const BorderRadius.only(
-                topLeft: Radius.circular(30),
-                topRight: Radius.circular(30),
+        return Container(
+          padding: const EdgeInsets.all(16.0),
+          decoration: BoxDecoration(
+            color: Theme.of(context).scaffoldBackgroundColor,
+            borderRadius: const BorderRadius.only(
+              topLeft: Radius.circular(20),
+              topRight: Radius.circular(20),
+            ),
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Text(
+                'Available on',
+                style: TextStyle(
+                  fontSize: 22,
+                  fontWeight: FontWeight.bold,
+                  fontFamily: 'Product',
+                ),
               ),
-            ),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Center(
-                  child: Container(
-                    height: 5,
-                    width: 50,
-                    decoration: BoxDecoration(
-                      color: Colors.grey,
-                      borderRadius: BorderRadius.circular(30),
-                    ),
-                  ),
+              const SizedBox(height: 16),
+              Expanded(
+                child: ListView.builder(
+                  shrinkWrap: true,
+                  itemCount: allStreamingServices.length,
+                  itemBuilder: (context, index) {
+                    final provider = allStreamingServices[index];
+                    return _buildProviderButton(provider, link);
+                  },
                 ),
-                SizedBox(height: 10),
-                Text(
-                  'Available on',
-                  style: TextStyle(
-                    fontSize: 22,
-                    fontWeight: FontWeight.bold,
-                    fontFamily: 'Product',
-                  ),
-                ),
-                const SizedBox(height: 16),
-                Expanded(
-                  child: ListView.builder(
-                    shrinkWrap: true,
-                    itemCount: allStreamingServices.length,
-                    itemBuilder: (context, index) {
-                      final provider = allStreamingServices[index];
-                      return _buildProviderButton(provider, link);
-                    },
-                  ),
-                ),
-              ],
-            ),
+              ),
+            ],
           ),
         );
       },
@@ -214,52 +272,49 @@ class _MovieDetailsPageState extends State<MovieDetailsPage> {
 
     return GestureDetector(
       onTap: () => _launchURL(link),
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 10.0),
-        child: Container(
-          height: 60,
-          margin: const EdgeInsets.only(bottom: 12.0),
-          padding: const EdgeInsets.symmetric(horizontal: 16),
-          decoration: BoxDecoration(
-            color: Theme.of(context).scaffoldBackgroundColor,
-            borderRadius: BorderRadius.circular(30),
-            boxShadow: [
-              BoxShadow(
-                color: shadowColor,
-                offset: const Offset(4, 4),
-                blurRadius: 10,
+      child: Container(
+        height: 60,
+        margin: const EdgeInsets.only(bottom: 12.0),
+        padding: const EdgeInsets.symmetric(horizontal: 16),
+        decoration: BoxDecoration(
+          color: Theme.of(context).scaffoldBackgroundColor,
+          borderRadius: BorderRadius.circular(12),
+          boxShadow: [
+            BoxShadow(
+              color: shadowColor,
+              offset: const Offset(4, 4),
+              blurRadius: 10,
+            ),
+            BoxShadow(
+              color: lightSourceColor,
+              offset: const Offset(-4, -4),
+              blurRadius: 10,
+            ),
+          ],
+        ),
+        child: Row(
+          children: [
+            ClipRRect(
+              borderRadius: BorderRadius.circular(8),
+              child: Image.network(
+                logoUrl,
+                width: 40,
+                height: 40,
+                fit: BoxFit.cover,
               ),
-              BoxShadow(
-                color: lightSourceColor,
-                offset: const Offset(-4, -4),
-                blurRadius: 10,
-              ),
-            ],
-          ),
-          child: Row(
-            children: [
-              ClipRRect(
-                borderRadius: BorderRadius.circular(8),
-                child: Image.network(
-                  logoUrl,
-                  width: 40,
-                  height: 40,
-                  fit: BoxFit.cover,
+            ),
+            const SizedBox(width: 16),
+            Expanded(
+              child: Text(
+                provider['provider_name'],
+                style: const TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w500,
                 ),
               ),
-              const SizedBox(width: 16),
-              Expanded(
-                child: Text(
-                  provider['provider_name'],
-                  style: const TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w500,
-                  ),
-                ),
-              ),
-              const Icon(Icons.arrow_circle_right_outlined, size: 30),
-            ],
-          ),
+            ),
+            const Icon(Icons.open_in_new, size: 20),
+          ],
         ),
       ),
     );
@@ -272,7 +327,8 @@ class _MovieDetailsPageState extends State<MovieDetailsPage> {
 
   Widget _buildBody() {
     if (_isLoading) {
-      return const Center(child: CircularProgressIndicator());
+      // UPDATED: Show the skeleton UI while loading.
+      return const MovieDetailsPageSkeleton();
     }
     if (_errorMessage != null) {
       return Center(
@@ -317,6 +373,7 @@ class _MovieDetailsPageState extends State<MovieDetailsPage> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       AnimatedSize(
+                        curve: Curves.decelerate,
                         duration: const Duration(milliseconds: 300),
                         child: Text(
                           _movieDetails!['overview'],
@@ -343,18 +400,18 @@ class _MovieDetailsPageState extends State<MovieDetailsPage> {
                 ),
                 const SizedBox(height: 24),
                 Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                  mainAxisAlignment: MainAxisAlignment.center,
                   children: [
                     ElevatedButton.icon(
                       onPressed: _showWatchProvidersSheet,
-                      icon: const Icon(Icons.play_arrow_rounded, size: 30),
+                      icon: const Icon(Icons.play_arrow_rounded),
                       label: const Text(
                         'Stream Now',
                         style: TextStyle(fontFamily: 'Product'),
                       ),
                       style: ElevatedButton.styleFrom(
                         padding: const EdgeInsets.symmetric(
-                          horizontal: 30,
+                          horizontal: 24,
                           vertical: 20,
                         ),
                         textStyle: const TextStyle(
@@ -362,29 +419,17 @@ class _MovieDetailsPageState extends State<MovieDetailsPage> {
                           fontWeight: FontWeight.bold,
                         ),
                         shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(50),
+                          borderRadius: BorderRadius.circular(30),
                         ),
                       ),
                     ),
+                    const SizedBox(width: 12),
                     Consumer<WishlistProvider>(
                       builder: (context, wishlistProvider, child) {
                         final isFavorite = wishlistProvider.isFavorite(
                           widget.movieId,
                         );
                         return ElevatedButton(
-                          style: ElevatedButton.styleFrom(
-                            shape: CircleBorder(),
-                            fixedSize: Size(70, 70),
-                          ),
-                          child: Center(
-                            child: Icon(
-                              isFavorite
-                                  ? Icons.favorite
-                                  : Icons.favorite_border,
-                              color: isFavorite ? Colors.red : null,
-                              size: 25,
-                            ),
-                          ),
                           onPressed: () {
                             if (isFavorite) {
                               wishlistProvider.removeFromWishlist(
@@ -394,16 +439,40 @@ class _MovieDetailsPageState extends State<MovieDetailsPage> {
                               wishlistProvider.addToWishlist(_movieDetails!);
                             }
                           },
+                          style: ElevatedButton.styleFrom(
+                            shape: const CircleBorder(),
+                            padding: const EdgeInsets.all(20), // Make it bigger
+                            backgroundColor: Theme.of(
+                              context,
+                            ).colorScheme.surfaceVariant,
+                          ),
+                          child: Icon(
+                            isFavorite ? Icons.favorite : Icons.favorite_border,
+                            color: isFavorite
+                                ? Colors.red
+                                : Theme.of(
+                                    context,
+                                  ).colorScheme.onSurfaceVariant,
+                          ),
                         );
                       },
                     ),
+                    const SizedBox(width: 12),
                     ElevatedButton(
+                      onPressed: () {
+                        // Add share functionality here
+                      },
                       style: ElevatedButton.styleFrom(
-                        shape: CircleBorder(),
-                        fixedSize: Size(70, 70),
+                        shape: const CircleBorder(),
+                        padding: const EdgeInsets.all(20), // Make it bigger
+                        backgroundColor: Theme.of(
+                          context,
+                        ).colorScheme.surfaceVariant,
                       ),
-                      child: Center(child: Icon(Icons.ios_share, size: 24)),
-                      onPressed: () {},
+                      child: Icon(
+                        Icons.share,
+                        color: Theme.of(context).colorScheme.onSurfaceVariant,
+                      ),
                     ),
                   ],
                 ),
@@ -450,7 +519,7 @@ class _MovieDetailsPageState extends State<MovieDetailsPage> {
             ],
           ),
         ),
-        centerTitle: false,
+        centerTitle: true,
         titlePadding: const EdgeInsets.only(left: 20, bottom: 16, right: 50),
         background: MoviePoster(
           movieId: widget.movieId,
