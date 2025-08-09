@@ -37,6 +37,9 @@ dependencies:
   http: ^1.5.0
   animations: ^2.0.11
   smooth_page_indicator: ^1.2.1
+  provider: ^6.1.5
+  url_launcher: ^6.3.2
+  palette_generator: ^0.3.3+7
 
 dev_dependencies:
   flutter_test:
@@ -92,6 +95,18 @@ flutter:
           weight: 500
         - asset: fonts/ClashDisplay-Bold.otf
           weight: 600
+    - family: Product
+      fonts:
+        - asset: fonts/ProductSans-Light.ttf
+          weight: 100
+        - asset: fonts/ProductSans-Thin.ttf
+          weight: 200
+        - asset: fonts/ProductSans-Medium.ttf
+          weight: 300
+        - asset: fonts/ProductSans-Bold.ttf
+          weight: 400
+        - asset: fonts/ProductSans-Black.ttf
+          weight: 500
 
   #
   # For details regarding fonts from package dependencies,

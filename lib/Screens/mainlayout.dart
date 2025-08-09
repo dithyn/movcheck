@@ -1,209 +1,168 @@
-import 'package:animations/animations.dart';
 import 'package:flutter/material.dart';
-import 'dart:ui';
+
+import 'dart:ui'; // Import this for the blur effect
 import 'package:movcheck/Screens/Homescreen.dart';
-// <-- IMPORTANT: Replace
-// I've renamed 'first.dart' to 'home_screen.dart' to follow Flutter conventions.
-// Make sure you rename your file and the class inside it to 'HomeScreen'.
+import 'package:movcheck/Screens/Searchpage.dart';
+import 'package:movcheck/Screens/Wishlist.dart';
+import 'package:movcheck/providers/theme_provider.dart';
+import 'package:provider/provider.dart';
 
-// --- Placeholder pages to prevent navigation errors ---
-// You will replace these with your actual screen widgets later.
-// ---------------------------------------------------------
+// --- Placeholder pages (no changes needed here) ---
 
-class Mainlayout extends StatefulWidget {
-  const Mainlayout({super.key});
-  @override
-  State<Mainlayout> createState() => Layoutstate();
-}
 
-class Layoutstate extends State<Mainlayout>
-    with SingleTickerProviderStateMixin {
-  late AnimationController _controller;
-  late Animation<Offset> _slideAnimation;
-
-  @override
-  void initState() {
-    super.initState();
-
-    _controller = AnimationController(
-      vsync: this,
-      duration: const Duration(milliseconds: 300),
-    );
-
-    _slideAnimation = Tween<Offset>(
-      begin: const Offset(-1.0, 0.0),
-      end: const Offset(0.0, 0.0),
-    ).animate(CurvedAnimation(parent: _controller, curve: Curves.decelerate));
-  }
-
-  void toggleDrawer() {
-    if (_controller.isCompleted) {
-      _controller.reverse(); // hide
-    } else {
-      _controller.forward(); // show
-    }
-  }
-
-  int index = 0;
-  List<int> history = [0];
-
-  // This list now contains your HomeScreen and placeholder widgets for the other pages.
-  // This is crucial to prevent "index out of range" errors when you navigate.
-  final List<Widget> pages = [
-    HomeScreen(), // Index 3
-    // Add more pages here as needed
-  ];
-
-  void onnavigate(int newindex) {
-    // Check if the index is valid before navigating
-    if (newindex >= 0 && newindex < pages.length) {
-      setState(() {
-        index = newindex;
-        history.add(index);
-      });
-    } else {
-      print("Error: Invalid page index $newindex");
-    }
-  }
-
-  Future<bool> _willpop() async {
-    if (history.length > 1) {
-      setState(() {
-        history.removeLast();
-        index = history.last;
-      });
-      return false;
-    }
-    return true;
-  }
-
+class AccountScreen extends StatelessWidget {
+  const AccountScreen({super.key});
   @override
   Widget build(BuildContext context) {
-    return WillPopScope(
-      onWillPop: _willpop,
-      child: Scaffold(
-        extendBody: true,
-        body: Stack(
+    final themeProvider = Provider.of<ThemeProvider>(context);
+    return Scaffold(
+      appBar: AppBar(title: const Text('Account'), centerTitle: true),
+      body: Padding(
+        padding: const EdgeInsets.all(16.0),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            PageTransitionSwitcher(
-              duration: const Duration(milliseconds: 500),
-              transitionBuilder: (child, primaryAnimation, secondaryAnimation) {
-                return SharedAxisTransition(
-                  animation: primaryAnimation,
-                  secondaryAnimation: secondaryAnimation,
-                  transitionType: SharedAxisTransitionType.horizontal,
-                  child: child,
+            const Text('Dark Mode', style: TextStyle(fontSize: 18)),
+            Switch.adaptive(
+              value: themeProvider.themeMode == ThemeMode.dark,
+              onChanged: (value) {
+                final provider = Provider.of<ThemeProvider>(
+                  context,
+                  listen: false,
                 );
+                provider.toggleTheme(value);
               },
-              // The key ensures the transition happens when the index changes.
-              child: IndexedStack(index: index, children: pages),
             ),
-            // Your slide-out drawer menu
-            // SlideTransition(
-            //   position: _slideAnimation,
-            //   child: ClipRRect(
-            //     borderRadius: const BorderRadius.only(
-            //       // <-- FIX: Was BorderRadiusGeometry.only
-            //       topRight: Radius.circular(30),
-            //       bottomRight: Radius.circular(30),
-            //     ),
-            //     child: Container(
-            //       width: MediaQuery.of(context).size.width - 30,
-            //       decoration: BoxDecoration(
-            //         // Added a backdrop blur to make it look nice
-            //         color: Colors.grey.shade900.withOpacity(0.8),
-            //         border: Border.all(width: 2, color: Colors.black26),
-            //         borderRadius: const BorderRadius.only(
-            //           bottomRight: Radius.circular(30),
-            //           topRight: Radius.circular(30),
-            //         ),
-            //       ),
-            //       child: BackdropFilter(
-            //         filter: ImageFilter.blur(sigmaX: 5.0, sigmaY: 5.0),
-            //         child: Padding(
-            //           padding: const EdgeInsets.only(
-            //             left: 20,
-            //             top: 60,
-            //           ), // Adjusted top padding
-            //           child: Column(
-            //             // <-- FIX: Removed invalid 'spacing' property
-            //             crossAxisAlignment: CrossAxisAlignment.start,
-            //             children: [
-            //               Row(
-            //                 // <-- FIX: Removed invalid 'spacing' property
-            //                 children: const [
-            //                   CircleAvatar(
-            //                     backgroundImage: AssetImage(
-            //                       'assets/users/me.jpg',
-            //                     ),
-            //                     radius: 30,
-            //                   ),
-            //                   SizedBox(width: 20), // Use SizedBox for spacing
-            //                   Text(
-            //                     "Hello, Adithyan!",
-            //                     style: TextStyle(
-            //                       fontFamily: 'HelveticaNeue',
-            //                       fontSize: 20,
-            //                     ),
-            //                   ),
-            //                 ],
-            //               ),
-            //               const SizedBox(
-            //                 height: 40,
-            //               ), // Use SizedBox for spacing
-            //               // --- Navigation Buttons ---
-            //               _buildNavButton(text: "Account", onPressed: () {}),
-            //               _buildNavButton(
-            //                 text: "Cart",
-            //                 onPressed: () {
-            //                   // Navigate to CartScreen (index 1)
-            //                   toggleDrawer();
-            //                 },
-            //               ),
-            //               _buildNavButton(
-            //                 text: "Wishlist",
-            //                 onPressed: () {
-            //                   toggleDrawer();
-            //                 },
-            //               ),
-            //               _buildNavButton(
-            //                 text: "Settings",
-            //                 onPressed: () {
-            //                   toggleDrawer();
-            //                 },
-            //               ),
-            //               _buildNavButton(text: "About", onPressed: () {}),
-            //             ],
-            //           ),
-            //         ),
-            //       ),
-            //     ),
-            //   ),
-            // ),
           ],
         ),
       ),
     );
   }
+}
+// ----------------------------------------------------
 
-  // Helper method to avoid repeating button code
-  Widget _buildNavButton({
-    required String text,
-    required VoidCallback onPressed,
-  }) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 15.0),
-      child: ElevatedButton(
-        style: ElevatedButton.styleFrom(
-          backgroundColor: Colors.black.withOpacity(0.1),
-          shadowColor: Colors.transparent,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(30),
+class Mainlayout extends StatefulWidget {
+  const Mainlayout({super.key});
+  @override
+  State<Mainlayout> createState() => _Layoutstate();
+}
+
+class _Layoutstate extends State<Mainlayout> {
+  int _selectedIndex = 0;
+
+  static const List<Widget> _pages = <Widget>[
+    HomeScreen(),
+    SearchPage(),
+    WishlistPage(),
+    AccountScreen(),
+  ];
+
+  void _onItemTapped(int index) {
+    setState(() {
+      _selectedIndex = index;
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      extendBody: true, // Keep this to draw behind the nav bar
+      body: Stack(
+        children: [
+          _pages.elementAt(_selectedIndex),
+          Align(alignment: Alignment.bottomCenter, child: _buildCustomNavBar()),
+        ],
+      ),
+    );
+  }
+
+  /// Builds the custom animated navigation bar.
+  Widget _buildCustomNavBar() {
+    final double screenWidth = MediaQuery.of(context).size.width;
+    final double navBarWidth = screenWidth - 70;
+    final double itemWidth = navBarWidth / _pages.length;
+
+    // This outer container is now just for positioning and shadow.
+    return Container(
+      height: 70,
+      width: navBarWidth,
+      margin: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(50),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.1),
+            blurRadius: 10,
+            offset: const Offset(0, 4),
           ),
-          fixedSize: const Size(280, 50),
+        ],
+      ),
+      // We use ClipRRect to contain the blur effect within the rounded corners.
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(50),
+        child: BackdropFilter(
+          filter: ImageFilter.blur(sigmaX: 10.0, sigmaY: 10.0),
+          child: Container(
+            // This container provides the semi-transparent "glass" color.
+            color:
+                (Theme.of(context).bottomNavigationBarTheme.backgroundColor ??
+                        Theme.of(context).colorScheme.surface)
+                    .withOpacity(0.4),
+            child: Stack(
+              alignment: Alignment.center,
+              children: [
+                AnimatedPositioned(
+                  duration: const Duration(milliseconds: 250),
+                  curve: Curves.decelerate,
+                  left: _selectedIndex * itemWidth,
+                  top: 0,
+                  height: 70,
+                  width: itemWidth,
+                  child: Container(
+                    margin: const EdgeInsets.all(6),
+                    decoration: BoxDecoration(
+                      color: Theme.of(
+                        context,
+                      ).colorScheme.primary.withOpacity(0.2),
+                      borderRadius: BorderRadius.circular(50),
+                    ),
+                  ),
+                ),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceAround,
+                  children: [
+                    _buildNavItem(Icons.home_rounded, 0),
+                    _buildNavItem(Icons.search_rounded, 1),
+                    _buildNavItem(Icons.favorite_border_rounded, 2),
+                    _buildNavItem(Icons.person_outline_rounded, 3),
+                  ],
+                ),
+              ],
+            ),
+          ),
         ),
-        onPressed: onPressed,
-        child: Text(text, style: const TextStyle(fontFamily: 'Helvetica')),
+      ),
+    );
+  }
+
+  /// Helper widget to build each individual navigation item.
+  Widget _buildNavItem(IconData icon, int index) {
+    bool isSelected = _selectedIndex == index;
+    return Expanded(
+      child: GestureDetector(
+        onTap: () => _onItemTapped(index),
+        behavior: HitTestBehavior.translucent,
+        child: Center(
+          child: Icon(
+            icon,
+            size: 28,
+            color: isSelected
+                ? Theme.of(context).bottomNavigationBarTheme.selectedItemColor
+                : Theme.of(
+                    context,
+                  ).bottomNavigationBarTheme.unselectedItemColor,
+          ),
+        ),
       ),
     );
   }

@@ -1,17 +1,65 @@
 import 'package:flutter/material.dart';
-import 'package:movcheck/Screens/Homescreen.dart';
+import 'package:movcheck/providers/theme_provider.dart';
 import 'package:movcheck/Screens/mainlayout.dart';
+import 'package:movcheck/providers/wishlist_provider.dart';
+import 'package:provider/provider.dart';
 
+// In main.dart
 void main() {
-  runApp(const MyApp());
+  runApp(
+    // Use MultiProvider to manage both providers
+    MultiProvider(
+      providers: [
+        ChangeNotifierProvider(create: (_) => ThemeProvider()),
+        ChangeNotifierProvider(create: (_) => WishlistProvider()),
+      ],
+      child: const MyApp(),
+    ),
+  );
 }
 
 class MyApp extends StatelessWidget {
   const MyApp({super.key});
 
-  // This widget is the root of your application.
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(home: Mainlayout(), debugShowCheckedModeBanner: false);
+    return Consumer<ThemeProvider>(
+      builder: (context, themeProvider, child) {
+        return MaterialApp(
+          title: 'MovieFlix',
+          debugShowCheckedModeBanner: false,
+          themeMode: themeProvider.themeMode,
+          theme: ThemeData(
+            brightness: Brightness.light,
+            primarySwatch: Colors.blue,
+            scaffoldBackgroundColor: Colors.white,
+            appBarTheme: const AppBarTheme(
+              backgroundColor: Colors.white,
+              foregroundColor: Colors.black,
+            ),
+            bottomNavigationBarTheme: const BottomNavigationBarThemeData(
+              backgroundColor: Colors.white,
+              selectedItemColor: Colors.black,
+              unselectedItemColor: Colors.grey,
+            ),
+          ),
+          darkTheme: ThemeData(
+            brightness: Brightness.dark,
+            primarySwatch: Colors.amber,
+            scaffoldBackgroundColor: const Color(0xFF121212),
+            appBarTheme: const AppBarTheme(
+              backgroundColor: Color(0xFF121212),
+              foregroundColor: Colors.white,
+            ),
+            bottomNavigationBarTheme: const BottomNavigationBarThemeData(
+              backgroundColor: Color(0xFF1F1F1F),
+              selectedItemColor: Colors.amber,
+              unselectedItemColor: Colors.grey,
+            ),
+          ),
+          home: const Mainlayout(),
+        );
+      },
+    );
   }
 }
