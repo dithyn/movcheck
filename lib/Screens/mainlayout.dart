@@ -1,17 +1,10 @@
 import 'package:flutter/material.dart';
-
-import 'dart:ui'; // Import this for the blur effect
+import 'dart:ui';
 import 'package:movcheck/Screens/Homescreen.dart';
 import 'package:movcheck/Screens/Searchpage.dart';
 import 'package:movcheck/Screens/Wishlist.dart';
 import 'package:movcheck/Screens/Accounts.dart';
-
-
-// --- Placeholder pages (no changes needed here) ---
-
-
-
-// ----------------------------------------------------
+import 'package:movcheck/Screens/categories_page.dart'; // Import the new page
 
 class Mainlayout extends StatefulWidget {
   const Mainlayout({super.key});
@@ -22,11 +15,13 @@ class Mainlayout extends StatefulWidget {
 class _Layoutstate extends State<Mainlayout> {
   int _selectedIndex = 0;
 
+  // UPDATED: Added CategoriesPage to the list
   static const List<Widget> _pages = <Widget>[
     HomeScreen(),
     SearchPage(),
+    CategoriesPage(), // New page
     WishlistPage(),
-    AccountPage()
+    AccountPage(),
   ];
 
   void _onItemTapped(int index) {
@@ -38,7 +33,7 @@ class _Layoutstate extends State<Mainlayout> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      extendBody: true, // Keep this to draw behind the nav bar
+      extendBody: true,
       body: Stack(
         children: [
           _pages.elementAt(_selectedIndex),
@@ -48,13 +43,11 @@ class _Layoutstate extends State<Mainlayout> {
     );
   }
 
-  /// Builds the custom animated navigation bar.
   Widget _buildCustomNavBar() {
     final double screenWidth = MediaQuery.of(context).size.width;
-    final double navBarWidth = screenWidth - 70;
+    final double navBarWidth = screenWidth - 40; // Adjusted width for 5 items
     final double itemWidth = navBarWidth / _pages.length;
 
-    // This outer container is now just for positioning and shadow.
     return Container(
       height: 70,
       width: navBarWidth,
@@ -69,23 +62,21 @@ class _Layoutstate extends State<Mainlayout> {
           ),
         ],
       ),
-      // We use ClipRRect to contain the blur effect within the rounded corners.
       child: ClipRRect(
         borderRadius: BorderRadius.circular(50),
         child: BackdropFilter(
           filter: ImageFilter.blur(sigmaX: 10.0, sigmaY: 10.0),
           child: Container(
-            // This container provides the semi-transparent "glass" color.
             color:
                 (Theme.of(context).bottomNavigationBarTheme.backgroundColor ??
                         Theme.of(context).colorScheme.surface)
-                    .withOpacity(0.4),
+                    .withOpacity(0.7),
             child: Stack(
               alignment: Alignment.center,
               children: [
                 AnimatedPositioned(
                   duration: const Duration(milliseconds: 250),
-                  curve: Curves.decelerate,
+                  curve: Curves.easeInOut,
                   left: _selectedIndex * itemWidth,
                   top: 0,
                   height: 70,
@@ -100,13 +91,15 @@ class _Layoutstate extends State<Mainlayout> {
                     ),
                   ),
                 ),
+                // UPDATED: Added new nav item
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceAround,
                   children: [
                     _buildNavItem(Icons.home_rounded, 0),
                     _buildNavItem(Icons.search_rounded, 1),
-                    _buildNavItem(Icons.favorite_border_rounded, 2),
-                    _buildNavItem(Icons.person_outline_rounded, 3),
+                    _buildNavItem(Icons.category_outlined, 2), // New icon
+                    _buildNavItem(Icons.favorite_border_rounded, 3),
+                    _buildNavItem(Icons.person_outline_rounded, 4),
                   ],
                 ),
               ],
@@ -117,7 +110,6 @@ class _Layoutstate extends State<Mainlayout> {
     );
   }
 
-  /// Helper widget to build each individual navigation item.
   Widget _buildNavItem(IconData icon, int index) {
     bool isSelected = _selectedIndex == index;
     return Expanded(

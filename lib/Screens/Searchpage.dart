@@ -179,10 +179,10 @@ class _SearchPageState extends State<SearchPage> {
       padding: const EdgeInsets.all(16.0),
       sliver: SliverGrid(
         gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-          crossAxisCount: 3,
-          childAspectRatio: 2 / 3,
-          crossAxisSpacing: 12,
-          mainAxisSpacing: 12,
+           crossAxisCount: 2,
+                          childAspectRatio: 2 / 3,
+                          crossAxisSpacing: 0,
+                          mainAxisSpacing: 10,
         ),
         delegate: SliverChildBuilderDelegate((context, index) {
           final movie = _searchResults[index];

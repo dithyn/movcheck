@@ -1,12 +1,12 @@
 import 'package:flutter/material.dart';
 import 'dart:ui';
 import 'package:movcheck/api.dart';
-import 'package:movcheck/Screens/MovieDetailsPage.dart';
+import 'package:movcheck/Screens/moviedetailspage.dart';
 import 'package:smooth_page_indicator/smooth_page_indicator.dart';
 
 enum ImageQuality { standard, original }
 
-// NEW: A reusable skeleton widget for placeholder UI.
+// A reusable skeleton widget for placeholder UI.
 class Skeleton extends StatelessWidget {
   final double? height;
   final double? width;
@@ -27,7 +27,7 @@ class Skeleton extends StatelessWidget {
   }
 }
 
-// NEW: A specific skeleton for the movie posters.
+// A specific skeleton for the movie posters.
 class MoviePosterSkeleton extends StatelessWidget {
   final bool isOriginalQuality;
   const MoviePosterSkeleton({super.key, this.isOriginalQuality = false});
@@ -41,29 +41,30 @@ class MoviePosterSkeleton extends StatelessWidget {
   }
 }
 
-// NEW: The complete skeleton layout for the HomeScreen.
+// The complete skeleton layout for the HomeScreen.
 class HomeScreenSkeleton extends StatelessWidget {
   const HomeScreenSkeleton({super.key});
 
   @override
   Widget build(BuildContext context) {
-    return Stack(
-      children: [
-        ListView(
-          physics: const ClampingScrollPhysics(),
-          padding: const EdgeInsets.only(bottom: 100.0),
-          children: [
-            // Skeleton for the PageView
-            SizedBox(
-              height: MediaQuery.of(context).size.height / 2,
-              child: const MoviePosterSkeleton(isOriginalQuality: true),
-            ),
-            const SizedBox(height: 24),
-            _buildSkeletonCategoryRow(),
-            const SizedBox(height: 24),
-            _buildSkeletonCategoryRow(),
-          ],
+    return CustomScrollView(
+      physics: const NeverScrollableScrollPhysics(),
+      slivers: [
+        SliverToBoxAdapter(
+          child: SizedBox(
+            height: MediaQuery.of(context).size.height / 2,
+            child: const MoviePosterSkeleton(isOriginalQuality: true),
+          ),
         ),
+        const SliverToBoxAdapter(child: SizedBox(height: 24)),
+        SliverToBoxAdapter(child: _buildSkeletonCategoryRow()),
+        const SliverToBoxAdapter(child: SizedBox(height: 24)),
+        SliverToBoxAdapter(child: _buildSkeletonCategoryRow()),
+        // ADDED: Skeletons for the new categories
+        const SliverToBoxAdapter(child: SizedBox(height: 24)),
+        SliverToBoxAdapter(child: _buildSkeletonCategoryRow()),
+        const SliverToBoxAdapter(child: SizedBox(height: 24)),
+        SliverToBoxAdapter(child: _buildSkeletonCategoryRow()),
       ],
     );
   }
@@ -79,12 +80,9 @@ class HomeScreenSkeleton extends StatelessWidget {
         const SizedBox(height: 8),
         SizedBox(
           height: 200,
-          child: ListView.separated(
-            separatorBuilder: (context, index) {
-              return SizedBox(width: 7);
-            },
+          child: ListView.builder(
             scrollDirection: Axis.horizontal,
-            itemCount: 5, // Show 5 placeholder items
+            itemCount: 5,
             padding: const EdgeInsets.symmetric(horizontal: 10),
             itemBuilder: (context, index) => const MoviePosterSkeleton(),
           ),
@@ -105,7 +103,12 @@ class _HomeScreenState extends State<HomeScreen> {
   final Api api = Api();
   bool _isLoading = true;
   String? _errorMessage;
-  List _trendingMovies = [], _topRatedMovies = [], _upcomingMovies = [];
+  // ADDED: State variables for new categories
+  List _trendingMovies = [],
+      _topRatedMovies = [],
+      _upcomingMovies = [],
+      _nowPlayingMovies = [],
+      _popularMovies = [];
   late PageController _pageController;
   late ScrollController _scrollController;
   bool _isAppBarVisible = true;
@@ -140,24 +143,27 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Future<void> _fetchAllMovies() async {
-    // Simulate a longer load time to see the skeleton UI
-    // await Future.delayed(const Duration(seconds: 2));
     if (!mounted) return;
     setState(() {
       _isLoading = true;
       _errorMessage = null;
     });
     try {
+      // ADDED: API calls for new categories
       final results = await Future.wait([
         api.getTrendingMovies(),
         api.getTopRatedMovies(),
         api.getUpcomingMovies(),
+        api.getNowPlayingMovies(),
+        api.getPopularMovies(),
       ]);
       if (!mounted) return;
       setState(() {
         _trendingMovies = results[0]['results'];
         _topRatedMovies = results[1]['results'];
         _upcomingMovies = results[2]['results'];
+        _nowPlayingMovies = results[3]['results'];
+        _popularMovies = results[4]['results'];
         _isLoading = false;
       });
     } catch (e) {
@@ -176,7 +182,6 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Widget _buildBody() {
-    // UPDATED: Show the skeleton UI while loading.
     if (_isLoading) {
       return const HomeScreenSkeleton();
     }
@@ -198,57 +203,81 @@ class _HomeScreenState extends State<HomeScreen> {
 
     return Stack(
       children: [
-        Container(color: Theme.of(context).scaffoldBackgroundColor),
-        ListView(
+        CustomScrollView(
+          physics: const ClampingScrollPhysics(),
           controller: _scrollController,
-          padding: const EdgeInsets.only(bottom: 100.0),
-          children: [
-            Stack(
-              alignment: Alignment.bottomCenter,
-              children: [
-                SizedBox(
-                  height: MediaQuery.of(context).size.height / 2,
-                  child: PageView.builder(
-                    controller: _pageController,
-                    itemCount: _trendingMovies.length,
-                    itemBuilder: (context, index) {
-                      final movie = _trendingMovies[index];
-                      return MoviePoster(
-                        movieId: movie['id'],
-                        posterPath: movie['poster_path'],
-                        title: movie['title'],
-                        quality: ImageQuality.original,
-                      );
-                    },
+          slivers: [
+            SliverToBoxAdapter(
+              child: Stack(
+                alignment: Alignment.bottomCenter,
+                children: [
+                  SizedBox(
+                    height: MediaQuery.of(context).size.height / 2,
+                    child: PageView.builder(
+                      controller: _pageController,
+                      itemCount: _trendingMovies.length,
+                      itemBuilder: (context, index) {
+                        final movie = _trendingMovies[index];
+                        return MoviePoster(
+                          movieId: movie['id'],
+                          posterPath: movie['poster_path'],
+                          title: movie['title'],
+                          quality: ImageQuality.original,
+                        );
+                      },
+                    ),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
-            const SizedBox(height: 12),
-            Padding(
-              padding: const EdgeInsets.only(bottom: 16.0),
-              child: SmoothPageIndicator(
-                controller: _pageController,
-                count: _trendingMovies.length,
-                effect: ExpandingDotsEffect(
-                  dotHeight: 5,
-                  spacing: 4,
-                  dotWidth: 20,
-                  activeDotColor: Theme.of(context).textTheme.bodyLarge!.color!,
-                  dotColor: Theme.of(context).hintColor,
+            const SliverToBoxAdapter(child: SizedBox(height: 15)),
+            SliverToBoxAdapter(
+              child: Center(
+                child: SmoothPageIndicator(
+                  controller: _pageController,
+                  count: _trendingMovies.length,
+                  effect: ExpandingDotsEffect(
+                    dotHeight: 8,
+                    dotWidth: 20,
+                    spacing: 6,
+                    activeDotColor: Theme.of(
+                      context,
+                    ).textTheme.bodyLarge!.color!,
+                    dotColor: Theme.of(context).hintColor,
+                  ),
                 ),
               ),
             ),
-            const SizedBox(height: 5),
-            _buildMovieCategoryRow(
-              title: 'Top Rated Movies',
-              movies: _topRatedMovies,
+            const SliverToBoxAdapter(child: SizedBox(height: 24)),
+            SliverToBoxAdapter(
+              child: _buildMovieCategoryRow(
+                title: 'Top Rated Movies',
+                movies: _topRatedMovies,
+              ),
             ),
-            const SizedBox(height: 24),
-            _buildMovieCategoryRow(
-              title: 'Upcoming Movies',
-              movies: _upcomingMovies,
+            const SliverToBoxAdapter(child: SizedBox(height: 24)),
+            SliverToBoxAdapter(
+              child: _buildMovieCategoryRow(
+                title: 'Upcoming Movies',
+                movies: _upcomingMovies,
+              ),
             ),
+            // ADDED: UI rows for new categories
+            const SliverToBoxAdapter(child: SizedBox(height: 24)),
+            SliverToBoxAdapter(
+              child: _buildMovieCategoryRow(
+                title: 'Now Playing',
+                movies: _nowPlayingMovies,
+              ),
+            ),
+            const SliverToBoxAdapter(child: SizedBox(height: 24)),
+            SliverToBoxAdapter(
+              child: _buildMovieCategoryRow(
+                title: 'Popular Movies',
+                movies: _popularMovies,
+              ),
+            ),
+            const SliverPadding(padding: EdgeInsets.only(bottom: 100.0)),
           ],
         ),
         _buildFloatingAppBar(),
@@ -264,29 +293,18 @@ class _HomeScreenState extends State<HomeScreen> {
         child: BackdropFilter(
           filter: ImageFilter.blur(sigmaX: 7, sigmaY: 7),
           child: Container(
-            height: 110,
+            height: 100,
             width: MediaQuery.of(context).size.width,
             padding: const EdgeInsets.only(top: 40, left: 16, right: 16),
             decoration: BoxDecoration(
-              gradient: LinearGradient(
-                begin: Alignment.topCenter,
-                end: Alignment.bottomCenter,
-                colors: [
-                  Theme.of(context).scaffoldBackgroundColor.withOpacity(0.7),
-                  Colors.transparent,
-                ],
-              ),
+              color: Theme.of(context).scaffoldBackgroundColor.withOpacity(0.7),
             ),
-            child: Padding(
-              padding: const EdgeInsets.only(top: 10, bottom: 10),
-              child: Text(
-                'MovCheck',
-                style: TextStyle(
-                  fontSize: 40,
-                  color: Colors.white,
-                  fontWeight: FontWeight.bold,
-                  fontFamily: 'ClashDisplay',
-                ),
+            child: Text(
+              'MovCheck',
+              style: TextStyle(
+                fontSize: 40,
+                fontWeight: FontWeight.bold,
+                fontFamily: 'ClashDisplay',
               ),
             ),
           ),
@@ -312,20 +330,42 @@ class _HomeScreenState extends State<HomeScreen> {
         ),
         const SizedBox(height: 8),
         SizedBox(
-          height: 200,
-          child: ListView.separated(
-            separatorBuilder: (context, index) {
-              return SizedBox(width: 7);
-            },
+          height: 220,
+          child: ListView.builder(
             scrollDirection: Axis.horizontal,
             itemCount: movies.length,
             padding: const EdgeInsets.symmetric(horizontal: 10),
             itemBuilder: (context, index) {
               final movie = movies[index];
-              return MoviePoster(
-                movieId: movie['id'],
-                posterPath: movie['poster_path'],
-                quality: ImageQuality.standard,
+              // Wrap the Column with a SizedBox to constrain its width
+              return SizedBox(
+                width: 130, // Match the width of the MoviePoster
+                child: Column(
+                  children: [
+                    MoviePoster(
+                      movieId: movie['id'],
+                      posterPath: movie['poster_path'],
+                      quality: ImageQuality.standard,
+                    ),
+                    const SizedBox(height: 8), // Add some space
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 4.0),
+                      child: Text(
+                        movie['title'],
+                        textAlign: TextAlign.center, // Center the text
+                        style: const TextStyle(
+                          fontSize: 13,
+                          height: 1.2,
+                          fontFamily: 'Product',
+                        ),
+                        softWrap: true,
+                        overflow:
+                            TextOverflow.ellipsis, // Use ellipsis for overflow
+                        maxLines: 2,
+                      ),
+                    ),
+                  ],
+                ),
               );
             },
           ),
@@ -363,7 +403,6 @@ class MoviePoster extends StatelessWidget {
           ? Image.network(
               imageUrl,
               fit: BoxFit.cover,
-              // UPDATED: Use a skeleton for the image loading placeholder.
               loadingBuilder: (context, child, loadingProgress) =>
                   loadingProgress == null
                   ? child
@@ -392,48 +431,63 @@ class MoviePoster extends StatelessWidget {
 
     return GestureDetector(
       onTap: onTap ?? defaultOnTap,
-      child: ClipRRect(
-        borderRadius: BorderRadius.circular(10),
-        child: quality == ImageQuality.original && title != null
-            ? Stack(
-                fit: StackFit.expand,
-                alignment: Alignment.topCenter,
-                children: [
-                  imageWidget,
-                  Container(
-                    decoration: BoxDecoration(
-                      gradient: LinearGradient(
-                        colors: [
-                          Colors.black.withOpacity(0.7),
-                          Colors.transparent,
-                        ],
-                        begin: Alignment.topCenter,
-                        end: Alignment.bottomCenter,
-                        stops: const [0.0, 0.4],
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 6.0),
+        child: ClipRRect(
+          borderRadius: BorderRadius.circular(10),
+          child: quality == ImageQuality.original && title != null
+              ? Stack(
+                  fit: StackFit.expand,
+                  alignment: Alignment.topCenter,
+                  children: [
+                    imageWidget,
+                    Container(
+                      decoration: BoxDecoration(
+                        gradient: LinearGradient(
+                          colors: [
+                            Colors.black.withOpacity(0.7),
+                            Colors.transparent,
+                          ],
+                          begin: Alignment.topCenter,
+                          end: Alignment.bottomCenter,
+                          stops: const [0.0, 0.4],
+                        ),
                       ),
                     ),
-                  ),
-                  Padding(
-                    padding: const EdgeInsets.only(left: 9.0),
-                    child: Align(
-                      alignment: AlignmentGeometry.xy(-1, 0.8),
+                    Container(
+                      decoration: BoxDecoration(
+                        gradient: LinearGradient(
+                          begin: Alignment.bottomCenter,
+                          end: Alignment.center,
+                          colors: [
+                            Theme.of(context).scaffoldBackgroundColor,
+                            Colors.transparent,
+                          ],
+                        ),
+                      ),
+                    ),
+                    Positioned(
+                      top: 300.0,
+                      left: 12.0,
+                      right: 12.0,
                       child: Text(
                         title!,
                         style: const TextStyle(
-                          fontSize: 40,
                           height: 1,
+                          letterSpacing: -2,
+
+                          fontSize: 50,
                           fontWeight: FontWeight.bold,
                           color: Colors.white,
-                          fontFamily: 'ClashDisplay',
                         ),
                         maxLines: 2,
                         overflow: TextOverflow.ellipsis,
                       ),
                     ),
-                  ),
-                ],
-              )
-            : imageWidget,
+                  ],
+                )
+              : imageWidget,
+        ),
       ),
     );
   }
